@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 import environ
+import dj_database_url
+import os
 
 env = environ.Env()
 
@@ -26,9 +28,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-$r(tx8cvnt#cxzqg=!521cugj9&5n@ji1xdr1i7376%)3h!=hx"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["0.0.0.0", "localhost", "127.0.0.1", "gastocontrol.herokuapp.com"]
 
 # Application definition
 
@@ -40,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "base.apps.BaseConfig",
+    "whitenoise.runserver_nostatic",
 ]
 
 MIDDLEWARE = [
@@ -50,6 +53,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = "expenseTracker.urls"
@@ -77,30 +81,17 @@ WSGI_APPLICATION = "expenseTracker.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    },
-    "expenses": {
-        "ENGINE": "djongo",
-        "CLIENT": {
-            "name": "expenses",
-            "host": f"mongodb+srv://{env('MONGO_USER')}:{env('MONGO_PASS')}@{env('MONGO_CLUSTER')}/{env('EXP_HOST')}",
-            "username": env("MONGO_USER"),
-            "password": env("MONGO_PASS"),
-            "authMechanism": env("AUTH_MECHANISM"),
-        },
-    },
-    "users": {
-        "ENGINE": "djongo",
-        "CLIENT": {
-            "name": "users",
-            "host": f"mongodb+srv://{env('MONGO_USER')}:{env('MONGO_PASS')}@{env('MONGO_CLUSTER')}/{env('USERS_HOST')}",
-            "username": env("MONGO_USER"),
-            "password": env("MONGO_PASS"),
-            "authMechanism": env("AUTH_MECHANISM"),
-        },
-    },
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": env("DB_NAME"),
+        "USER": env("DB_USERNAME"),
+        "PASSWORD": env("PASSWORD"),
+        "HOST": env("DB_HOSTNAME"),
+        "PORT": env("DB_PORT"),
+    }
 }
+
+db_from_env = dj_database_url.config(conn_max_age=600)
+DATABASES["default"].update(db_from_env)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -134,7 +125,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = "static/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
+
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATIC_URL = "/static/"
+
+# Extra places for collectstatic to find static files.
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
