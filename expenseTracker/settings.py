@@ -11,9 +11,9 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
-import environ
+
 import dj_database_url
-import os
+import environ
 
 env = environ.Env()
 
@@ -28,9 +28,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-$r(tx8cvnt#cxzqg=!521cugj9&5n@ji1xdr1i7376%)3h!=hx"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ["0.0.0.0", "localhost", "127.0.0.1", "gastocontrol.herokuapp.com"]
+# ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1", "gastocontrol.herokuapp.com"]
+
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -125,18 +127,23 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-MEDIA_URL = "/media/"
-
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATIC_URL = "/static/"
-
-# Extra places for collectstatic to find static files.
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
-
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+"""
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
+
+# STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATIC_URL = "/static/"
+
+# Extra places for collectstatic to find static files.
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "templates"),)
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+"""

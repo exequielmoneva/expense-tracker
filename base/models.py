@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -13,7 +14,7 @@ from django.contrib.auth.models import User
 """
 
 
-class Expense(models.Model):
+class Expenses(models.Model):
     CURRENCY_CHOICES = (
         ("usd", "USD"),
         ("eur", "EUR"),
@@ -32,10 +33,10 @@ class Expense(models.Model):
     final_currency = models.CharField(
         max_length=10, choices=CURRENCY_CHOICES, default="eur"
     )
-
-    class Meta:
-        abstract = True
-        ordering = ["created"]
+    total_amount = models.FloatField(default=0.01, validators=[MinValueValidator(0.01)])
 
     def __srt__(self):
         return self.title
+
+    class Meta:
+        ordering = ["created"]
