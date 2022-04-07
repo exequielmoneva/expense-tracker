@@ -1,0 +1,17 @@
+<h1>Expenses List</h1>
+
+<table>
+    <tr>
+      <th>Item</th>
+      <th></th>
+    </tr>
+    {% for expense in expenses %}
+    <tr>
+        <td>{{ expense.title }}</td>
+        <td><a href="{% url 'expense' expense.id %}">View</a></td>
+    </tr>
+    {% empty %}
+    <h3> No items in list</h3>
+
+    {% endfor %}
+</table>
