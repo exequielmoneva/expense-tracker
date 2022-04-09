@@ -1,17 +1,21 @@
 <h1>Expenses List</h1>
 
+<a href="{% url 'expense-create' %}">Agregar gasto</a>
+
 <table>
     <tr>
-      <th>Item</th>
+      <th>Gastos</th>
       <th></th>
     </tr>
     {% for expense in expenses %}
     <tr>
         <td>{{ expense.title }}</td>
-        <td><a href="{% url 'expense' expense.id %}">View</a></td>
+        <td><a href="{% url 'expense' expense.id %}">Ver</a></td>
+        <td><a href="{% url 'expense-update' expense.id %}">Editar</a></td>
+        <td><a href="{% url 'expense-delete' expense.id %}">Borrar</a></td>
     </tr>
     {% empty %}
-    <h3> No items in list</h3>
+    <h3> No hay gastos registrados</h3>
 
     {% endfor %}
 </table>
