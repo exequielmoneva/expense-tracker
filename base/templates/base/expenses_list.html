@@ -1,21 +1,61 @@
-<h1>Expenses List</h1>
+{% extends 'base/main.html' %} {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
+<div class="header-bar">
+    <div>
+        <h1>Hola {{request.user|title}}</h1>
+    </div>
+
+    {% if request.user.is_authenticated %}
+    <a href="{% url 'logout' %}">Cerrar sesion</a> {% else %}
+    <a href="{% url 'login' %}">Iniciar sesion</a> {% endif %}
+</div>
+
+<div id="search-add-wrapper">
+    <form method="GET" style="display: flex;">
+        <input type='text' name='search-area' placeholder="Busca tu gasto" value="{{search_input}}">
+        <input class="button" type="submit" value='Search'>
+    </form>
+    {% if expenses|length > 0 %}
+    <a id="add-link" href="{% url 'expense-create' %}">&#x2b;</a>
+    {% endif %}
+</div>
+
+
+<div class="center">
+<h1>Mis gastos</h1>
+</div>
 <a href="{% url 'expense-create' %}">Agregar gasto</a>
 
-<table>
-    <tr>
-      <th>Gastos</th>
-      <th></th>
-    </tr>
+<div id="tasklist" class="task-items-wrapper">
     {% for expense in expenses %}
-    <tr>
-        <td>{{ expense.title }}</td>
-        <td><a href="{% url 'expense' expense.id %}">Ver</a></td>
-        <td><a href="{% url 'expense-update' expense.id %}">Editar</a></td>
-        <td><a href="{% url 'expense-delete' expense.id %}">Borrar</a></td>
-    </tr>
-    {% empty %}
-    <h3> No hay gastos registrados</h3>
+    <div class="task-wrapper" data-position="{{expense.pk}}">
+        <div class="task-title">
+            <a href="{% url 'expense-update' expense.id %}">{{expense.title}}</a>
+        </div>
+        <div class="task-controls">
+            <a class="delete-link" href="{% url 'expense-delete' expense.id %}">&#215;&nbsp;</a>
+        </div>
+    </div>
 
+    {% empty %}
+    <div style="text-align: center; padding-bottom: 10px; line-height: 1em;">
+        <h3>No hay gastos registrados</h3>
+        <h3>Registra un <a style="text-decoration: none; color: #e53935;" href="{% url 'expense-create' %}">nuevo gasto</a> ! </h3>
+    </div>
     {% endfor %}
-</table>
+</div>
+
+<script>
+    var ExpenseList = document.getElementById("tasklist");
+    var positionInput = document.getElementById("positionInput");
+
+    let sortable = Sortable.create(ExpenseList, {
+        ghostClass: 'dropArea',
+        chosenClass: 'selectedTask',
+
+    });
+
+</script>
+
+{% endblock content %}

@@ -39,4 +39,5 @@ class Expenses(models.Model):
         return self.title
 
     class Meta:
-        ordering = ["created"]
+        # order_with_respect_to = 'user'
+        ordering = ["-created"]
