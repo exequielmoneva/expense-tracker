@@ -1,3 +1,4 @@
+import requests
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -65,19 +66,28 @@ class ExpenseDetail(LoginRequiredMixin, DetailView):
 
 
 class ExpenseCreate(LoginRequiredMixin, CreateView):
+    def __exchange_currency(self, user):
+        url = (
+            f"https://api.exchangerate.host/convert?from={user.original_currency}&"
+            f"to={user.final_currency}&{user.original_amount}=10"
+        )
+        response = requests.get(url)
+        data = response.json()
+        return round(data.get("result"), 2)
+
     model = Expenses
     fields = [
         "title",
         "description",
-        "total_amount",
+        "original_amount",
         "original_currency",
         "final_currency",
     ]
-    # fields = "__all__"
     success_url = reverse_lazy("expenses")
 
     def form_valid(self, form):
         form.instance.user = self.request.user
+        form.instance.final_amount = self.__exchange_currency(form.instance)
         return super(ExpenseCreate, self).form_valid(form)
 
 
@@ -86,7 +96,7 @@ class ExpenseUpdate(LoginRequiredMixin, UpdateView):
     fields = [
         "title",
         "description",
-        "total_amount",
+        "original_amount",
         "original_currency",
         "final_currency",
     ]
@@ -101,12 +111,4 @@ class ExpenseDelete(LoginRequiredMixin, DeleteView):
 
 class ExpenseReorder(View):
     def post(self, request):
-        # form = PositionForm(request.POST)
-
-        """if form.is_valid():
-        position_list = form.cleaned_data["position"].split(',')
-
-        with transaction.atomic():
-            self.request.user.set_expenses_order(position_list)"""
-
         return redirect(reverse_lazy("expenses"))

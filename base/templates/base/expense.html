@@ -1,11 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<h1>Task : {{ expense.title }}</h1>
+{% extends 'base/main.html' %} {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<div class="header-bar">
+    <a href="{% url 'expenses' %}">&#8592; Volver</a>
+</div>
+<div id="tasklist" class="task-items-wrapper">
+<div class="task-wrapper" data-position="{{expense.pk}}">
+    <div class="center" style="font-size: 20px;">
+        <tr  style="border-spacing: 20px;">
+        <td>Título: {{expense.title}}</td>
+        </br></br>
+        <td>Descripción: {{expense.description}}</td>
+        </br>
+            </br>
+        <td>Valor original: {{ expense.original_amount }} {{ expense.original_currency }}</td>
+        </br>
+        </br>
+        <td>Valor final: {{ expense.final_amount }} {{ expense.final_currency }}</td>
+        </tr>
 
-</body>
-</html>
+    </div>
+    <div class="task-controls">
+        <a href="{% url 'expense-update' expense.id %}">Editar</a>
+        <a class="delete-link" href="{% url 'expense-delete' expense.id %}">&nbsp;&nbsp;&#215;&nbsp;</a>
+    </div>
+</div>
+</div>
+{% endblock content %}

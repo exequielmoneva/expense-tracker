@@ -31,10 +31,11 @@
     {% for expense in expenses %}
     <div class="task-wrapper" data-position="{{expense.pk}}">
         <div class="task-title">
-            <a href="{% url 'expense-update' expense.id %}">{{expense.title}}</a>
+            <a href="{% url 'expense' expense.id %}">{{expense.title}}  {{ expense.final_amount }} {{ expense.final_currency }}</a>
         </div>
         <div class="task-controls">
-            <a class="delete-link" href="{% url 'expense-delete' expense.id %}">&#215;&nbsp;</a>
+            <a href="{% url 'expense-update' expense.id %}">Editar</a>
+        <a class="delete-link" href="{% url 'expense-delete' expense.id %}">&nbsp;&nbsp;&#215;&nbsp;</a>
         </div>
     </div>
 
