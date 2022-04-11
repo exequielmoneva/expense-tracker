@@ -3,6 +3,7 @@ from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
+from django.core.mail import send_mail
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
@@ -11,6 +12,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormVi
 from django.views.generic.list import ListView
 
 from base.models import Expenses
+from expenseTracker.settings import SENDER
 
 
 class CustomLoginView(LoginView):
@@ -31,7 +33,18 @@ class RegisterPage(FormView):
     def form_valid(self, form):
         user = form.save()
         if user is not None:
+            send_mail(
+                "Bienvenido a Gasto Control!",
+                f"Hola {user.username}! En este correo vas a encontrar tus credenciales para que no las pierdas:\n\n"
+                f"Usuario: {user.username}\n"
+                f'Contraseña: {form.cleaned_data["password1"]}\n\n'
+                f"Que tengas un buen día!",
+                SENDER,
+                [user.username],
+                fail_silently=False,
+            )
             login(self.request, user)
+
         return super(RegisterPage, self).form_valid(form)
 
     def get(self, *args, **kwargs):
