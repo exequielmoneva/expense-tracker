@@ -1,9 +1,11 @@
-{% extends 'base/main.html' %} {% block content %}
+{% extends 'base/main.html' %}
+{% load base_tags %}
+{% block content %}
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
 <div class="header-bar">
     <div>
-        <h1>Hola {{request.user|title}}</h1>
+        <h1>Hola {{request.user|username}}</h1>
     </div>
 
     {% if request.user.is_authenticated %}
