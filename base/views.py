@@ -33,9 +33,10 @@ class RegisterPage(FormView):
     def form_valid(self, form):
         user = form.save()
         if user is not None:
+            username = user.username.split("@")[0]
             send_mail(
                 "Bienvenido a Gasto Control!",
-                f"Hola {user.username}! En este correo vas a encontrar tus credenciales para que no las pierdas:\n\n"
+                f"Hola {username}! En este correo vas a encontrar tus credenciales para que no las pierdas:\n\n"
                 f"Usuario: {user.username}\n"
                 f'Contraseña: {form.cleaned_data["password1"]}\n\n'
                 f"Que tengas un buen día!",
