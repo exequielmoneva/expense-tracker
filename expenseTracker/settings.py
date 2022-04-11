@@ -32,8 +32,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1", "gastocontrol.herokuapp.com"]
 
-# ALLOWED_HOSTS = []
-
 # Application definition
 
 INSTALLED_APPS = [
