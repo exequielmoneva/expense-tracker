@@ -27,7 +27,12 @@ class ExpensesPDF(APIView):
 
         # Draw things on the PDF. Here's where the PDF generation happens.
         # See the ReportLab documentation for the full list of functionality.
-        # p.drawString(100, 100, "Hello world.")
+        for expense in expenses:
+            p.drawString(
+                expense.title,
+                expense.created,
+                f"{expense.final_amount} {expense.final_currency}",
+            )
 
         # Close the PDF object cleanly, and we're done.
         # p.showPage()
