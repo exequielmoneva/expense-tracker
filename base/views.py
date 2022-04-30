@@ -1,18 +1,55 @@
 import requests
-from django.contrib.auth import login
+from django.contrib.auth import login, get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.views.generic.list import ListView
+from reportlab.pdfgen import canvas
+from rest_framework.views import APIView
 
 from base.models import Expenses
-from expenseTracker.settings import SENDER
+from expenseTracker.settings import SENDER, SECRET_SAUCE
+
+
+class ExpensesPDF(APIView):
+    @staticmethod
+    def build_pdf(expenses):
+
+        # Create the PDF object, using the buffer as its "file."
+        p = canvas.Canvas("Reporte Mensual.pdf")
+
+        # Draw things on the PDF. Here's where the PDF generation happens.
+        # See the ReportLab documentation for the full list of functionality.
+        # p.drawString(100, 100, "Hello world.")
+
+        # Close the PDF object cleanly, and we're done.
+        # p.showPage()
+        p.save()
+
+        # FileResponse sets the Content-Disposition header so that browsers
+        # present the option to save the file.
+        return FileResponse(p, as_attachment=True, filename="hello.pdf")
+
+    def post(self, request):
+        data = request.data
+        if data.get("secret_sauce") == SECRET_SAUCE:
+            users = get_user_model().objects.all()
+            user_expenses = list()
+            for user in users:
+                """for expense in Expenses.objects.filter(user=user):
+                user_expenses.append(expense.title)"""
+                return HttpResponse(
+                    self.build_pdf(Expenses.objects.filter(user=user)), 200
+                )
+
+            return HttpResponse(user_expenses, 200)
 
 
 class CustomLoginView(LoginView):
@@ -80,7 +117,8 @@ class ExpenseDetail(LoginRequiredMixin, DetailView):
 
 
 class ExpenseCreate(LoginRequiredMixin, CreateView):
-    def __exchange_currency(self, user):
+    @staticmethod
+    def __exchange_currency(user):
         url = (
             f"https://api.exchangerate.host/convert?from={user.original_currency}&"
             f"to={user.final_currency}&{user.original_amount}=10"

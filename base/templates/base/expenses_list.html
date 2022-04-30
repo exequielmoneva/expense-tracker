@@ -11,6 +11,8 @@
     {% if request.user.is_authenticated %}
     <a href="{% url 'logout' %}">Cerrar sesion</a> {% else %}
     <a href="{% url 'login' %}">Iniciar sesion</a> {% endif %}
+
+    <a href="{% url 'expense-pdf' %}">Descargar resumen</a>
 </div>
 
 <div id="search-add-wrapper">
