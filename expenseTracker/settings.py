@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "base.apps.BaseConfig",
     "whitenoise.runserver_nostatic",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -89,6 +90,8 @@ DATABASES = {
         "PORT": env("DB_PORT"),
     }
 }
+
+SECRET_SAUCE = env("SECRET_SAUCE")
 
 db_from_env = dj_database_url.config(conn_max_age=600)
 DATABASES["default"].update(db_from_env)
