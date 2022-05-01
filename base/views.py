@@ -1,46 +1,90 @@
+import io
+
 import requests
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
-from django.http import FileResponse, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.views.generic.list import ListView
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from rest_framework.views import APIView
 
 from base.models import Expenses
 from expenseTracker.settings import SENDER, SECRET_SAUCE
+from django.core.mail import EmailMessage
 
 
 class ExpensesPDF(APIView):
     @staticmethod
+    def send_pdf(user):
+        username = user.username.split("@")[0]
+        email = EmailMessage(
+            "Tu resumen mensual",
+            f"Hola {username}! En este correo vas a encontrar tu resumen de gastos del mes.\n\n"
+            f"Que tengas un buen día!",
+            SENDER,
+            [user.username],
+        )
+        email.attach_file("Reporte Mensual.pdf")
+        email.send()
+
+    @staticmethod
     def build_pdf(expenses):
+        buf = io.BytesIO()
 
-        # Create the PDF object, using the buffer as its "file."
-        p = canvas.Canvas("Reporte Mensual.pdf")
+        p = canvas.Canvas("Reporte Mensual.pdf", pagesize=letter, bottomup=0)
+        p.setTitle("Reporte Mensual")
+        text_object = p.beginText()
+        text_object.setTextOrigin(inch, inch)
+        text_object.setFont("Helvetica", 14)
 
-        # Draw things on the PDF. Here's where the PDF generation happens.
-        # See the ReportLab documentation for the full list of functionality.
+        exps = list()
+        expenses_by_currency = {
+            "USD": 0,
+            "EUR": 0,
+            "BTC": 0,
+            "CHF": 0,
+            "GBP": 0,
+            "ARS": 0,
+        }
+
         for expense in expenses:
-            p.drawString(
-                expense.title,
-                expense.created,
-                f"{expense.final_amount} {expense.final_currency}",
+            expenses_by_currency[str(expense.final_currency)] += float(
+                expense.final_amount
+            )
+            exps.append(
+                f"{str(expense.title):<25}{str(expense.created.date()):<25}"
+                f"{str(expense.final_amount)} {str(expense.final_currency)}"
             )
 
-        # Close the PDF object cleanly, and we're done.
-        # p.showPage()
+        text_object.textLine(f"{'':<45}{'Reporte Mensual'}")
+        text_object.textLine("")
+        text_object.textLine(f"{'Descripción':<35}{'Fecha':<25}{'Valor'}")
+        text_object.textLine("")
+
+        [text_object.textLine(exp) for exp in exps]
+
+        text_object.textLine("")
+        text_object.textLine("")
+        text_object.textLine(f"{'':<45}{'Gastos totales del mes'}")
+        text_object.textLine("")
+        for currency, total in expenses_by_currency.items():
+            text_object.textLine(f"{currency}: {total}")
+
+        p.drawText(text_object)
+
         p.save()
 
-        # FileResponse sets the Content-Disposition header so that browsers
-        # present the option to save the file.
-        return FileResponse(p, as_attachment=True, filename="hello.pdf")
+        buf.seek(0)
 
     def post(self, request):
         data = request.data
@@ -48,11 +92,10 @@ class ExpensesPDF(APIView):
             users = get_user_model().objects.all()
             user_expenses = list()
             for user in users:
-                """for expense in Expenses.objects.filter(user=user):
-                user_expenses.append(expense.title)"""
-                return HttpResponse(
-                    self.build_pdf(Expenses.objects.filter(user=user)), 200
-                )
+                exp = Expenses.objects.filter(user=user)
+                if exp:
+                    self.build_pdf(exp)
+                    self.send_pdf(user)
 
             return HttpResponse(user_expenses, 200)
 
