@@ -199,7 +199,7 @@ class ExpenseCreate(LoginRequiredMixin, CreateView):
     def __exchange_currency(user):
         url = (
             f"https://api.exchangerate.host/convert?from={user.original_currency}&"
-            f"to={user.final_currency}&{user.original_amount}=10"
+            f"to={user.final_currency}&amount={user.original_amount}"
         )
         response = requests.get(url)
         data = response.json()
