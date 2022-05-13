@@ -18,6 +18,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from rest_framework.views import APIView
+import datetime
 
 from base.models import Expenses
 from expenseTracker.settings import SENDER, SECRET_SAUCE
@@ -90,15 +91,25 @@ class ExpensesPDF(APIView):
     def post(self, request):
         data = request.data
         if data.get("secret_sauce") == SECRET_SAUCE:
+            today = datetime.date.today()
+            first = today.replace(day=1)
+            last_month = first - datetime.timedelta(days=1)
             users = get_user_model().objects.all()
             user_expenses = list()
             for user in users:
-                exp = Expenses.objects.filter(user=user)
+                exp = Expenses.objects.filter(
+                    user=user,
+                    created__year=last_month.strftime("%Y"),
+                    created__month=last_month.strftime("%m"),
+                )
                 if exp:
                     self.build_pdf(exp)
                     self.send_pdf(user)
 
             return HttpResponse(user_expenses, 200)
+
+    def get(self, request):
+        return HttpResponse("Method not allowed", 404)
 
 
 class CustomLoginView(LoginView):
@@ -157,14 +168,14 @@ class ExpenseList(LoginRequiredMixin, ListView):
         for expense in expenses:
             current_total[str(expense.final_currency)] += float(expense.final_amount)
 
-        current_total = {k: v for k, v in current_total.items() if v != 0}
-
-        return current_total
+        return {k: v for k, v in current_total.items() if v != 0}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["expenses"] = context["expenses"].filter(user=self.request.user)
-        context["current_total"] = self.calculate_current_total(context["expenses"])
+        context["user_current_total"] = self.calculate_current_total(
+            context["expenses"]
+        )
 
         search_input = self.request.GET.get("search-area") or ""
         if search_input:
@@ -228,11 +239,6 @@ class ExpenseDelete(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("expenses")
 
 
-class ExpenseReorder(View):
-    def post(self, request):
-        return redirect(reverse_lazy("expenses"))
-
-
 class PdfButton(LoginRequiredMixin, View):
     @staticmethod
     def build_pdf(expenses):
@@ -284,20 +290,22 @@ class PdfButton(LoginRequiredMixin, View):
         buf.seek(0)
 
     def get(self, request):
-        users = get_user_model().objects.all()
-
-        for user in users:
-            exp = Expenses.objects.filter(user=user)
-            if exp:
-                self.build_pdf(exp)
+        user = request.user
+        today = datetime.date.today()
+        exp = Expenses.objects.filter(
+            user=user,
+            created__year=today.strftime("%Y"),
+            created__month=today.strftime("%m"),
+        )
+        self.build_pdf(exp)
         path = open("Reporte Mensual.pdf", "rb")
-        # Set the mime type
+
         mime_type, _ = mimetypes.guess_type("Reporte Mensual.pdf")
-        # Set the return value of the HttpResponse
+
         response = HttpResponse(path, content_type=mime_type)
-        # Set the HTTP header for sending to browser
+
         response["Content-Disposition"] = (
             "attachment; filename=%s" % "Reporte Mensual.pdf"
         )
-        # Return the response value
+
         return response

@@ -6,13 +6,22 @@
 <div class="header-bar">
     <div>
         <h1>Hola {{request.user|username}}</h1>
+    <th>Gastos del mes</th></br>
+        {% for key, values in user_current_total.items %}
+    <tr>
+        <td>{{key}}:{{ values }}</td></br>
+
+    </tr>
+{% endfor %}
     </div>
 
     {% if request.user.is_authenticated %}
     <a href="{% url 'logout' %}">Cerrar sesion</a> {% else %}
     <a href="{% url 'login' %}">Iniciar sesion</a> {% endif %}
 
-    <a href="{% url 'expense-pdf' %}">Descargar resumen</a>
+    <a href="{% url 'expense-pdf' %}">Descargar resumen del mes</a>
+
+
 </div>
 
 <div id="search-add-wrapper">
@@ -51,16 +60,6 @@
     {% endfor %}
 </div>
 
-<script>
-    var ExpenseList = document.getElementById("tasklist");
-    var positionInput = document.getElementById("positionInput");
 
-    let sortable = Sortable.create(ExpenseList, {
-        ghostClass: 'dropArea',
-        chosenClass: 'selectedTask',
-
-    });
-
-</script>
 
 {% endblock content %}
