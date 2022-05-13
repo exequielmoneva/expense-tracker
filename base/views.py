@@ -1,4 +1,5 @@
 import io
+import mimetypes
 
 import requests
 from django.contrib.auth import login, get_user_model
@@ -143,9 +144,20 @@ class ExpenseList(LoginRequiredMixin, ListView):
     model = Expenses
     context_object_name = "expenses"
 
+    @staticmethod
+    def calculate_current_total(expenses):
+        current_total = dict()
+        for expense in expenses:
+            current_total[expense.final_currency] += expense.final_amount
+
+        current_total = {k: v for k, v in current_total.items() if v != 0}
+
+        return current_total
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["expenses"] = context["expenses"].filter(user=self.request.user)
+        context["current_total"] = self.calculate_current_total(context["expenses"])
 
         search_input = self.request.GET.get("search-area") or ""
         if search_input:
@@ -212,3 +224,73 @@ class ExpenseDelete(LoginRequiredMixin, DeleteView):
 class ExpenseReorder(View):
     def post(self, request):
         return redirect(reverse_lazy("expenses"))
+
+
+class PdfButton(LoginRequiredMixin, View):
+    @staticmethod
+    def build_pdf(expenses):
+        buf = io.BytesIO()
+
+        p = canvas.Canvas("Reporte Mensual.pdf", pagesize=letter, bottomup=0)
+        p.setTitle("Reporte Mensual")
+        text_object = p.beginText()
+        text_object.setTextOrigin(inch, inch)
+        text_object.setFont("Helvetica", 14)
+
+        exps = list()
+        expenses_by_currency = {
+            "USD": 0,
+            "EUR": 0,
+            "BTC": 0,
+            "CHF": 0,
+            "GBP": 0,
+            "ARS": 0,
+        }
+
+        for expense in expenses:
+            expenses_by_currency[str(expense.final_currency)] += float(
+                expense.final_amount
+            )
+            exps.append(
+                f"{str(expense.title):<25}{str(expense.created.date()):<25}"
+                f"{str(expense.final_amount)} {str(expense.final_currency)}"
+            )
+
+        text_object.textLine(f"{'':<45}{'Reporte Mensual'}")
+        text_object.textLine("")
+        text_object.textLine(f"{'Descripción':<35}{'Fecha':<25}{'Valor'}")
+        text_object.textLine("")
+
+        [text_object.textLine(exp) for exp in exps]
+
+        text_object.textLine("")
+        text_object.textLine("")
+        text_object.textLine(f"{'':<45}{'Gastos totales del mes'}")
+        text_object.textLine("")
+        for currency, total in expenses_by_currency.items():
+            text_object.textLine(f"{currency}: {total}")
+
+        p.drawText(text_object)
+
+        p.save()
+
+        buf.seek(0)
+
+    def get(self, request):
+        users = get_user_model().objects.all()
+
+        for user in users:
+            exp = Expenses.objects.filter(user=user)
+            if exp:
+                self.build_pdf(exp)
+        path = open("Reporte Mensual.pdf", "rb")
+        # Set the mime type
+        mime_type, _ = mimetypes.guess_type("Reporte Mensual.pdf")
+        # Set the return value of the HttpResponse
+        response = HttpResponse(path, content_type=mime_type)
+        # Set the HTTP header for sending to browser
+        response["Content-Disposition"] = (
+            "attachment; filename=%s" % "Reporte Mensual.pdf"
+        )
+        # Return the response value
+        return response

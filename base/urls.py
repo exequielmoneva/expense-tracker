@@ -10,7 +10,7 @@ from .views import (
     CustomLoginView,
     RegisterPage,
     ExpenseReorder,
-    ExpensesPDF,
+    PdfButton,
 )
 
 urlpatterns = [
@@ -22,6 +22,6 @@ urlpatterns = [
     path("expense-create/", ExpenseCreate.as_view(), name="expense-create"),
     path("expense-update/<int:pk>", ExpenseUpdate.as_view(), name="expense-update"),
     path("expense-delete/<int:pk>", ExpenseDelete.as_view(), name="expense-delete"),
-    path("expense-pdf", ExpensesPDF.as_view(), name="expense-pdf"),
+    path("expense-pdf", PdfButton.as_view(), name="expense-pdf"),
     path("task-reorder/", ExpenseReorder.as_view(), name="expense-reorder"),
 ]
