@@ -146,9 +146,16 @@ class ExpenseList(LoginRequiredMixin, ListView):
 
     @staticmethod
     def calculate_current_total(expenses):
-        current_total = dict()
+        current_total = {
+            "USD": 0,
+            "EUR": 0,
+            "BTC": 0,
+            "CHF": 0,
+            "GBP": 0,
+            "ARS": 0,
+        }
         for expense in expenses:
-            current_total[expense.final_currency] += expense.final_amount
+            current_total[str(expense.final_currency)] += float(expense.final_amount)
 
         current_total = {k: v for k, v in current_total.items() if v != 0}
 
