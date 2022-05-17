@@ -168,7 +168,7 @@ class ExpenseList(LoginRequiredMixin, ListView):
         for expense in expenses:
             current_total[str(expense.final_currency)] += float(expense.final_amount)
 
-        return {k: v for k, v in current_total.items() if v != 0}
+        return {k: round(v, 2) for k, v in current_total.items() if v != 0}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

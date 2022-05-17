@@ -12,14 +12,14 @@
         <td>{{key}}:{{ values }}</td></br>
 
     </tr>
+
 {% endfor %}
+    <a href="{% url 'expense-pdf' %}">Descargar resumen del mes</a>
     </div>
 
     {% if request.user.is_authenticated %}
-    <a href="{% url 'logout' %}">Cerrar sesion</a> {% else %}
+    <a href="{% url 'logout' %}">Cerrar sesion</a>{% else %}
     <a href="{% url 'login' %}">Iniciar sesion</a> {% endif %}
-
-    <a href="{% url 'expense-pdf' %}">Descargar resumen del mes</a>
 
 
 </div>
