@@ -1,3 +1,4 @@
+import datetime
 import io
 import mimetypes
 
@@ -6,6 +7,7 @@ from django.contrib.auth import login, get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
+from django.core.mail import EmailMessage
 from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -18,12 +20,9 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from rest_framework.views import APIView
-import datetime
 
 from base.models import Expenses
 from expenseTracker.settings import SENDER, SECRET_SAUCE
-from django.core.mail import EmailMessage
-from django.views.decorators.csrf import csrf_exempt
 
 
 def build_pdf(expenses):
@@ -83,7 +82,6 @@ def exchange_currency(user):
     return round(data.get("result"), 2)
 
 
-@csrf_exempt
 class ExpensesPDF(APIView):
     @staticmethod
     def send_pdf(user):
