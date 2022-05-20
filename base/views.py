@@ -25,6 +25,63 @@ from expenseTracker.settings import SENDER, SECRET_SAUCE
 from django.core.mail import EmailMessage
 
 
+def build_pdf(expenses):
+    buf = io.BytesIO()
+
+    p = canvas.Canvas("Reporte Mensual.pdf", pagesize=letter, bottomup=0)
+    p.setTitle("Reporte Mensual")
+    text_object = p.beginText()
+    text_object.setTextOrigin(inch, inch)
+    text_object.setFont("Helvetica", 14)
+
+    exps = list()
+    expenses_by_currency = {
+        "USD": 0,
+        "EUR": 0,
+        "BTC": 0,
+        "CHF": 0,
+        "GBP": 0,
+        "ARS": 0,
+    }
+
+    for expense in expenses:
+        expenses_by_currency[str(expense.final_currency)] += float(expense.final_amount)
+        exps.append(
+            f"{str(expense.title):<25}{str(expense.created.date()):<25}"
+            f"{str(expense.final_amount)} {str(expense.final_currency)}"
+        )
+
+    text_object.textLine(f"{'':<45}{'Reporte Mensual'}")
+    text_object.textLine("")
+    text_object.textLine(f"{'Descripción':<35}{'Fecha':<25}{'Valor'}")
+    text_object.textLine("")
+
+    [text_object.textLine(exp) for exp in exps]
+
+    text_object.textLine("")
+    text_object.textLine("")
+    text_object.textLine(f"{'':<45}{'Gastos totales del mes'}")
+    text_object.textLine("")
+    for currency, total in expenses_by_currency.items():
+        text_object.textLine(f"{currency}: {round(total, 2)}")
+
+    p.drawText(text_object)
+
+    p.save()
+
+    buf.seek(0)
+
+
+def exchange_currency(user):
+    url = (
+        f"https://api.exchangerate.host/convert?from={user.original_currency}&"
+        f"to={user.final_currency}&amount={user.original_amount}"
+    )
+    response = requests.get(url)
+    data = response.json()
+    return round(data.get("result"), 2)
+
+
 class ExpensesPDF(APIView):
     @staticmethod
     def send_pdf(user):
@@ -38,55 +95,6 @@ class ExpensesPDF(APIView):
         )
         email.attach_file("Reporte Mensual.pdf")
         email.send()
-
-    @staticmethod
-    def build_pdf(expenses):
-        buf = io.BytesIO()
-
-        p = canvas.Canvas("Reporte Mensual.pdf", pagesize=letter, bottomup=0)
-        p.setTitle("Reporte Mensual")
-        text_object = p.beginText()
-        text_object.setTextOrigin(inch, inch)
-        text_object.setFont("Helvetica", 14)
-
-        exps = list()
-        expenses_by_currency = {
-            "USD": 0,
-            "EUR": 0,
-            "BTC": 0,
-            "CHF": 0,
-            "GBP": 0,
-            "ARS": 0,
-        }
-
-        for expense in expenses:
-            expenses_by_currency[str(expense.final_currency)] += float(
-                expense.final_amount
-            )
-            exps.append(
-                f"{str(expense.title):<25}{str(expense.created.date()):<25}"
-                f"{str(expense.final_amount)} {str(expense.final_currency)}"
-            )
-
-        text_object.textLine(f"{'':<45}{'Reporte Mensual'}")
-        text_object.textLine("")
-        text_object.textLine(f"{'Descripción':<35}{'Fecha':<25}{'Valor'}")
-        text_object.textLine("")
-
-        [text_object.textLine(exp) for exp in exps]
-
-        text_object.textLine("")
-        text_object.textLine("")
-        text_object.textLine(f"{'':<45}{'Gastos totales del mes'}")
-        text_object.textLine("")
-        for currency, total in expenses_by_currency.items():
-            text_object.textLine(f"{currency}: {total}")
-
-        p.drawText(text_object)
-
-        p.save()
-
-        buf.seek(0)
 
     def post(self, request):
         data = request.data
@@ -103,7 +111,7 @@ class ExpensesPDF(APIView):
                     created__month=last_month.strftime("%m"),
                 )
                 if exp:
-                    self.build_pdf(exp)
+                    build_pdf(exp)
                     self.send_pdf(user)
 
             return HttpResponse(user_expenses, 200)
@@ -195,15 +203,6 @@ class ExpenseDetail(LoginRequiredMixin, DetailView):
 
 
 class ExpenseCreate(LoginRequiredMixin, CreateView):
-    @staticmethod
-    def __exchange_currency(user):
-        url = (
-            f"https://api.exchangerate.host/convert?from={user.original_currency}&"
-            f"to={user.final_currency}&amount={user.original_amount}"
-        )
-        response = requests.get(url)
-        data = response.json()
-        return round(data.get("result"), 2)
 
     model = Expenses
     fields = [
@@ -217,11 +216,12 @@ class ExpenseCreate(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        form.instance.final_amount = self.__exchange_currency(form.instance)
+        form.instance.final_amount = exchange_currency(form.instance)
         return super(ExpenseCreate, self).form_valid(form)
 
 
 class ExpenseUpdate(LoginRequiredMixin, UpdateView):
+
     model = Expenses
     fields = [
         "title",
@@ -230,7 +230,13 @@ class ExpenseUpdate(LoginRequiredMixin, UpdateView):
         "original_currency",
         "final_currency",
     ]
+
     success_url = reverse_lazy("expenses")
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.final_amount = exchange_currency(form.instance)
+        return super(ExpenseUpdate, self).form_valid(form)
 
 
 class ExpenseDelete(LoginRequiredMixin, DeleteView):
@@ -240,55 +246,6 @@ class ExpenseDelete(LoginRequiredMixin, DeleteView):
 
 
 class PdfButton(LoginRequiredMixin, View):
-    @staticmethod
-    def build_pdf(expenses):
-        buf = io.BytesIO()
-
-        p = canvas.Canvas("Reporte Mensual.pdf", pagesize=letter, bottomup=0)
-        p.setTitle("Reporte Mensual")
-        text_object = p.beginText()
-        text_object.setTextOrigin(inch, inch)
-        text_object.setFont("Helvetica", 14)
-
-        exps = list()
-        expenses_by_currency = {
-            "USD": 0,
-            "EUR": 0,
-            "BTC": 0,
-            "CHF": 0,
-            "GBP": 0,
-            "ARS": 0,
-        }
-
-        for expense in expenses:
-            expenses_by_currency[str(expense.final_currency)] += float(
-                expense.final_amount
-            )
-            exps.append(
-                f"{str(expense.title):<25}{str(expense.created.date()):<25}"
-                f"{str(expense.final_amount)} {str(expense.final_currency)}"
-            )
-
-        text_object.textLine(f"{'':<45}{'Reporte Mensual'}")
-        text_object.textLine("")
-        text_object.textLine(f"{'Descripción':<35}{'Fecha':<25}{'Valor'}")
-        text_object.textLine("")
-
-        [text_object.textLine(exp) for exp in exps]
-
-        text_object.textLine("")
-        text_object.textLine("")
-        text_object.textLine(f"{'':<45}{'Gastos totales del mes'}")
-        text_object.textLine("")
-        for currency, total in expenses_by_currency.items():
-            text_object.textLine(f"{currency}: {total}")
-
-        p.drawText(text_object)
-
-        p.save()
-
-        buf.seek(0)
-
     def get(self, request):
         user = request.user
         today = datetime.date.today()
@@ -297,7 +254,7 @@ class PdfButton(LoginRequiredMixin, View):
             created__year=today.strftime("%Y"),
             created__month=today.strftime("%m"),
         )
-        self.build_pdf(exp)
+        build_pdf(exp)
         path = open("Reporte Mensual.pdf", "rb")
 
         mime_type, _ = mimetypes.guess_type("Reporte Mensual.pdf")
