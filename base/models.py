@@ -22,9 +22,7 @@ class Expenses(models.Model):
     final_currency = models.CharField(
         max_length=10, choices=CURRENCY_CHOICES, default="EUR"
     )
-    original_amount = models.FloatField(
-        default=0.01, validators=[MinValueValidator(0.01)]
-    )
+    original_amount = models.FloatField(validators=[MinValueValidator(0.01)])
     final_amount = models.FloatField(default=0.01)
 
     def __srt__(self):
