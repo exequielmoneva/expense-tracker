@@ -113,7 +113,7 @@ class ExpensesPDF(APIView):
                     build_pdf(exp)
                     self.send_pdf(user)
 
-            return "OK"
+            return HttpResponse(200)
 
     def get(self, request):
         return HttpResponse("Method not allowed", 404)
