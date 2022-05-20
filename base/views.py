@@ -103,7 +103,6 @@ class ExpensesPDF(APIView):
             first = today.replace(day=1)
             last_month = first - datetime.timedelta(days=1)
             users = get_user_model().objects.all()
-            user_expenses = list()
             for user in users:
                 exp = Expenses.objects.filter(
                     user=user,
@@ -114,7 +113,7 @@ class ExpensesPDF(APIView):
                     build_pdf(exp)
                     self.send_pdf(user)
 
-            return HttpResponse(user_expenses, 200)
+            return HttpResponse(200)
 
     def get(self, request):
         return HttpResponse("Method not allowed", 404)
