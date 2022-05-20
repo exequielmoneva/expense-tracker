@@ -4,7 +4,7 @@ A solution for controlling all your expenses no matter the currency.
 
 # Table of Contents  
 1. [Introduction](#Introduction)
-2. [How to use](#How to use)
+2. [How to use](#How-to-use)
 3. [Technical stack](#Technical-stack)
 4. [ToDos](#ToDos)
 
