@@ -23,6 +23,7 @@ import datetime
 from base.models import Expenses
 from expenseTracker.settings import SENDER, SECRET_SAUCE
 from django.core.mail import EmailMessage
+from django.views.decorators.csrf import csrf_exempt
 
 
 def build_pdf(expenses):
@@ -82,6 +83,7 @@ def exchange_currency(user):
     return round(data.get("result"), 2)
 
 
+@csrf_exempt
 class ExpensesPDF(APIView):
     @staticmethod
     def send_pdf(user):
