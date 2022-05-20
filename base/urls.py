@@ -23,5 +23,5 @@ urlpatterns = [
     path("expense-update/<int:pk>", ExpenseUpdate.as_view(), name="expense-update"),
     path("expense-delete/<int:pk>", ExpenseDelete.as_view(), name="expense-delete"),
     path("expense-pdf", PdfButton.as_view(), name="expense-pdf"),
-    path("monthly-pdf-resume", ExpensesPDF.as_view(), name="monthly-pdf-resume"),
+    path("monthly-pdf-resume", ExpensesPDF, name="monthly-pdf-resume"),
 ]
